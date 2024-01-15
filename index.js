@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 3000;
+const port =  8000;
 const cors = require("cors");
 
 console.log("user => ", process.env.BUCKET);
@@ -12,6 +12,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.BUCKET}:${process.env.BUCKET_KEY}@cluster0.lyiobzh.mongodb.net/?retryWrites=true&w=majority`;
 
 app.use(cors());
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("World say hello to MiniTeen ");
@@ -41,10 +42,10 @@ async function run() {
     });
 
     // ---posting toy data
-    app.post("/add-toy",async (req,res)=>{
-      const body=req.body
-      console.log("the data",body);
-      const result = await toys.insertOne(body)
+    app.post("/add-toy", async(req,res)=>{
+      let data=req.body
+      console.log("given data =>",data);
+      const result=await toys.insertOne(data)
       res.send(result)
     })
 
