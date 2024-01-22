@@ -40,6 +40,14 @@ async function run() {
       const result = await toys.find().toArray();
       res.send(result);
     });
+    app.get("/all-toys/:category",async(req,res)=>{
+      const category=req.params.category
+      console.log("category", category);
+      const result=await toys.find({subCategory:category}).toArray()
+      res.send(result)
+    })
+    // ---getting single data 
+    app.get("")
 
     // ---posting toy data
     app.post("/add-toy", async(req,res)=>{
