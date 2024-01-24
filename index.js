@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const app = express();
-const port =  8000;
+const port = 8000;
 const cors = require("cors");
 
 console.log("user => ", process.env.BUCKET);
@@ -33,29 +33,48 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    /*---------- DATA-BASE COLLECTION ----------*/
     const toys = client.db("miniTinDB").collection("toysCollection");
+
+    /*---------- CREATING INDEX FOR SEARCH ---------- */
+    const indexKey = { toyName: 1 };
+    const indexOption = { name: "toyname" };
+    const result = await toys.createIndex(indexKey, indexOption);
+    /*---------- ALL ROUTE HERE ----------*/
 
     // ---getting all data
     app.get("/all-toys", async (req, res) => {
       const result = await toys.find().toArray();
       res.send(result);
     });
-    app.get("/all-toys/:category",async(req,res)=>{
-      const category=req.params.category
+    // ---searching route for alltoy
+    app.get("/toySearchByName/:text", async (req, res) => {
+      const toyname = req.params.text;
+      const result = await toys.find({
+        toyName: {
+          $regex: toyname,
+          $options: "i",
+        },
+      }).toArray();
+      res.send(result);
+    });
+    // ---getting category wise data
+    app.get("/all-toys/:category", async (req, res) => {
+      const category = req.params.category;
       console.log("category", category);
-      const result=await toys.find({subCategory:category}).toArray()
-      res.send(result)
-    })
-    // ---getting single data 
-    app.get("")
+      const result = await toys.find({ subCategory: category }).toArray();
+      res.send(result);
+    });
+    // ---getting single data
+    app.get("");
 
     // ---posting toy data
-    app.post("/add-toy", async(req,res)=>{
-      let data=req.body
-      console.log("given data =>",data);
-      const result=await toys.insertOne(data)
-      res.send(result)
-    })
+    app.post("/add-toy", async (req, res) => {
+      let data = req.body;
+      console.log("given data =>", data);
+      const result = await toys.insertOne(data);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
