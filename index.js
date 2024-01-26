@@ -50,12 +50,14 @@ async function run() {
     // ---searching route for alltoy
     app.get("/toySearchByName/:text", async (req, res) => {
       const toyname = req.params.text;
-      const result = await toys.find({
-        toyName: {
-          $regex: toyname,
-          $options: "i",
-        },
-      }).toArray();
+      const result = await toys
+        .find({
+          toyName: {
+            $regex: toyname,
+            $options: "i",
+          },
+        })
+        .toArray();
       res.send(result);
     });
     // ---getting category wise data
@@ -75,6 +77,14 @@ async function run() {
       const result = await toys.insertOne(data);
       res.send(result);
     });
+    // ---get my toy
+    app.get("/mytoy/:email", async (req, res) => {
+      let email = req.params.email;
+      console.log("this is email ",email);
+      const result = await toys.find({ sellerEmail: email }).toArray();
+      res.send(result);
+    });
+    //
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
