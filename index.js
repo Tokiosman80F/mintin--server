@@ -8,7 +8,7 @@ const cors = require("cors");
 console.log("user => ", process.env.BUCKET);
 console.log("user pass=> ", process.env.BUCKET_KEY);
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.BUCKET}:${process.env.BUCKET_KEY}@cluster0.lyiobzh.mongodb.net/?retryWrites=true&w=majority`;
 
 app.use(cors());
@@ -80,12 +80,34 @@ async function run() {
     // ---get my toy
     app.get("/mytoy/:email", async (req, res) => {
       let email = req.params.email;
-      console.log("this is email ",email);
+      console.log("this is email ", email);
       const result = await toys.find({ sellerEmail: email }).toArray();
       res.send(result);
     });
-    //
-
+    // ---delete my toy
+    app.delete("/mytoy/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("this is id", id);
+      const query = { _id: new ObjectId(id) };
+      const result = await toys.deleteOne(query);
+      res.send(result);
+    });
+    // ---update my toy
+    app.patch("/mytoy-edit/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          toyName: body.toyNam,
+          price: body.price,
+          availableQuantity: body.availableQuantity,
+          description: body.description,
+        },
+      };
+      const result = await toys.updateOne(filter, updateDoc);
+      res.send(result)
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
