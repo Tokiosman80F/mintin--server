@@ -5,21 +5,22 @@ const app = express();
 const port = 8000;
 const cors = require("cors");
 
-console.log("user => ", process.env.BUCKET);
-console.log("user pass=> ", process.env.BUCKET_KEY);
+// console.log("user => ", process.env.BUCKET);
+// console.log("user pass=> ", process.env.BUCKET_KEY);
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.BUCKET}:${process.env.BUCKET_KEY}@cluster0.lyiobzh.mongodb.net/?retryWrites=true&w=majority`;
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("World say hello to MiniTeen ");
 });
 
-// mongo db
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// MongoDB connection setup
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -30,24 +31,19 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    /*---------- DATA-BASE COLLECTION ----------*/
     const toys = client.db("miniTinDB").collection("toysCollection");
 
-    /*---------- CREATING INDEX FOR SEARCH ---------- */
     const indexKey = { toyName: 1 };
     const indexOption = { name: "toyname" };
     const result = await toys.createIndex(indexKey, indexOption);
-    /*---------- ALL ROUTE HERE ----------*/
 
-    // ---getting all data
     app.get("/all-toys", async (req, res) => {
       const result = await toys.find().toArray();
       res.send(result);
     });
-    // ---searching route for alltoy
+
     app.get("/toySearchByName/:text", async (req, res) => {
       const toyname = req.params.text;
       const result = await toys
@@ -60,31 +56,34 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    // ---getting category wise data
+
     app.get("/all-toys/:category", async (req, res) => {
       const category = req.params.category;
       console.log("category", category);
       const result = await toys.find({ subCategory: category }).toArray();
       res.send(result);
     });
-    // ---getting single data
-    app.get("");
 
-    // ---posting toy data
+    app.get("/toy/:id", async (req, res) => {
+      const id = req.params.id;
+      const toy = await toys.findOne({ _id: new ObjectId(id) });
+      res.send(toy);
+    });
+
     app.post("/add-toy", async (req, res) => {
       let data = req.body;
       console.log("given data =>", data);
       const result = await toys.insertOne(data);
       res.send(result);
     });
-    // ---get my toy
+
     app.get("/mytoy/:email", async (req, res) => {
       let email = req.params.email;
       console.log("this is email ", email);
       const result = await toys.find({ sellerEmail: email }).toArray();
       res.send(result);
     });
-    // ---delete my toy
+
     app.delete("/mytoy/:id", async (req, res) => {
       const id = req.params.id;
       console.log("this is id", id);
@@ -92,29 +91,29 @@ async function run() {
       const result = await toys.deleteOne(query);
       res.send(result);
     });
-    // ---update my toy
+
     app.patch("/mytoy-edit/:id", async (req, res) => {
       const id = req.params.id;
       const body = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          toyName: body.toyNam,
+          toyName: body.toyName,
           price: body.price,
           availableQuantity: body.availableQuantity,
           description: body.description,
         },
       };
       const result = await toys.updateOne(filter, updateDoc);
-      res.send(result)
+      res.send(result);
     });
-    // Send a ping to confirm a successful connection
+
     await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("Error connecting to MongoDB", error);
   } finally {
-    // Ensures that the client will close when you finish/error
+    // Uncomment to close the connection when the server stops
     // await client.close();
   }
 }
